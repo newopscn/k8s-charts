@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "strongswan.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "strongswan.name" . }}
+    helm.sh/chart: {{ include "strongswan.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "strongswan.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "strongswan.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          ports:
+            - name: ike
+              containerPort: 500
+              protocol: UDP
+            - name: ike-nat
+              containerPort: 4500
+              protocol: UDP
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+              - NET_ADMIN
+          volumeMounts:
+            - name: strongswan-config-ipsec
+              mountPath: /etc/ipsec.conf
+              subPath: ipsec.conf
+            - name: strongswan-config-ipsecrets
+              mountPath: /etc/ipsec.secrets
+              subPath: ipsec.secrets
+            - mountPath: /etc/ipsec.d/cacerts/chain.pem
+              name: opsvpn-strongswan-cert-chain
+              subPath: chain.pem
+            - mountPath: /etc/ipsec.d/certs/cert.pem
+              name: opsvpn-strongswan-cert-fullchain
+              subPath: cert.pem
+            - mountPath: /etc/ipsec.d/private/privkey.pem
+              name: opsvpn-strongswan-cert-private
+              subPath: privkey.pem
+      hostNetwork: false
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+        
+    {{- end }}
+      volumes:
+        - name: strongswan-config-ipsec
+          configMap:
+            defaultMode: 420
+            items:
+              - key: ipsec.conf
+                path: ipsec.conf
+            name: {{ .Release.Name }}-{{ .Chart.Name }}-config
+        - name: strongswan-config-ipsecrets
+          configMap:
+            defaultMode: 420
+            items:
+              - key: ipsec.secrets
+                path: ipsec.secrets
+            name: {{ .Release.Name }}-{{ .Chart.Name }}-config
+        - name: opsvpn-strongswan-cert-chain
+          secret:
+            defaultMode: 493
+            items:
+            - key: chain.pem
+              path: chain.pem
+            optional: false
+            secretName: {{ .Release.Name }}-{{ .Chart.Name }}-cert
+        - name: opsvpn-strongswan-cert-fullchain
+          secret:
+            defaultMode: 493
+            items:
+            - key: cert.pem
+              path: cert.pem
+            optional: false
+            secretName: {{ .Release.Name }}-{{ .Chart.Name }}-cert
+        - name: opsvpn-strongswan-cert-private
+          secret:
+            defaultMode: 493
+            items:
+            - key: privkey.pem
+              path: privkey.pem
+            optional: false
+            secretName: {{ .Release.Name }}-{{ .Chart.Name }}-cert
