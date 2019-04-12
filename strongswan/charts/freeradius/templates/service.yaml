@@ -8,12 +8,16 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
-  type: {{ .Values.service.type }}
+  type: ClusterIP
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
+    - port: 1812
+      targetPort: 1812
+      protocol: UDP
+      name: server
+    - port: 1813
+      targetPort: 1813
+      protocol: UDP
+      name: server-bind
   selector:
     app.kubernetes.io/name: {{ include "freeradius.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}

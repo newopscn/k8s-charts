@@ -34,8 +34,8 @@ data:
 
         right=%any                   #客户端标识,%any表示任意
         rightsourceip=192.168.111.0/24  #分配给客户端的虚拟 ip 段
-        #rightauth=eap-radius        #freeradius ldap
-        rightauth=eap-mschapv2
+        rightauth=eap-radius        #freeradius ldap
+        #rightauth=eap-mschapv2
         rightsendcert=never
         rightdns=8.8.8.8,8.8.4.4
 
@@ -46,4 +46,20 @@ data:
   ipsec.secrets: |
     # ipsec.secrets - strongSwan IPsec secrets file
     : RSA privkey.pem
-    wanglin : EAP "oracle@dsky"
+    #testing : EAP "testing@dsky"
+  eap-radius.conf: |
+    eap-radius {
+        load = yes
+        dae {
+        }
+        forward {
+        }
+        servers {
+            vpa {
+                secret = testing123
+                address = opsvpn-freeradius
+            }
+        }
+        xauth {
+        }
+    }

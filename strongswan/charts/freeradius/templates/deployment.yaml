@@ -25,9 +25,12 @@ spec:
           args: ["-X"]
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
+            - name: server
+              containerPort: 1812
+              protocol: UDP
+            - name: server-bind
+              containerPort: 1813
+              protocol: UDP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
