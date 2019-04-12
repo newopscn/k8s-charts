@@ -40,20 +40,20 @@ spec:
               add:
               - NET_ADMIN
           volumeMounts:
-            - name: strongswan-config-ipsec
+            - name: config-ipsec
               mountPath: /etc/ipsec.conf
               subPath: ipsec.conf
-            - name: strongswan-config-ipsecrets
+            - name: config-ipsecrets
               mountPath: /etc/ipsec.secrets
               subPath: ipsec.secrets
             - mountPath: /etc/ipsec.d/cacerts/chain.pem
-              name: opsvpn-strongswan-cert-chain
+              name: cert-chain
               subPath: chain.pem
             - mountPath: /etc/ipsec.d/certs/cert.pem
-              name: opsvpn-strongswan-cert-fullchain
+              name: cert-fullchain
               subPath: cert.pem
             - mountPath: /etc/ipsec.d/private/privkey.pem
-              name: opsvpn-strongswan-cert-private
+              name: cert-private
               subPath: privkey.pem
       hostNetwork: false
       {{- with .Values.nodeSelector }}
@@ -67,24 +67,23 @@ spec:
     {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
-        
     {{- end }}
       volumes:
-        - name: strongswan-config-ipsec
+        - name: config-ipsec
           configMap:
             defaultMode: 420
             items:
               - key: ipsec.conf
                 path: ipsec.conf
             name: {{ .Release.Name }}-{{ .Chart.Name }}-config
-        - name: strongswan-config-ipsecrets
+        - name: config-ipsecrets
           configMap:
             defaultMode: 420
             items:
               - key: ipsec.secrets
                 path: ipsec.secrets
             name: {{ .Release.Name }}-{{ .Chart.Name }}-config
-        - name: opsvpn-strongswan-cert-chain
+        - name: cert-chain
           secret:
             defaultMode: 493
             items:
@@ -92,7 +91,7 @@ spec:
               path: chain.pem
             optional: false
             secretName: {{ .Release.Name }}-{{ .Chart.Name }}-cert
-        - name: opsvpn-strongswan-cert-fullchain
+        - name: cert-fullchain
           secret:
             defaultMode: 493
             items:
@@ -100,7 +99,7 @@ spec:
               path: cert.pem
             optional: false
             secretName: {{ .Release.Name }}-{{ .Chart.Name }}-cert
-        - name: opsvpn-strongswan-cert-private
+        - name: cert-private
           secret:
             defaultMode: 493
             items:

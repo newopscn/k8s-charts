@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "freeradius.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "freeradius.name" . }}
+    helm.sh/chart: {{ include "freeradius.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "freeradius.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "freeradius.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          args: ["-X"]
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: clients
+              mountPath: /etc/raddb/clients.conf
+              subPath: clients.conf
+            - name: authorize
+              mountPath: /etc/raddb/mods-config/files/authorize
+              subPath: authorize
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - configMap:
+            defaultMode: 416
+            items:
+            - key: clients.conf
+              path: clients.conf
+            name: {{ include "freeradius.fullname" . }}-config
+          name: clients
+        - configMap:
+            defaultMode: 416
+            items:
+            - key: authorize
+              path: authorize
+            name: {{ include "freeradius.fullname" . }}-config
+          name: authorize
